@@ -7,7 +7,7 @@
     
     <!-- 前台服务权限（防杀后台） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     
     <!-- Android 13+ 通知权限 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -22,9 +22,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_water_pet"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_water_pet"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.WaterPet">
 
@@ -38,16 +38,12 @@
             </intent-filter>
         </activity>
 
-        <!-- 悬浮窗前台服务 -->
+        <!-- 悬浮窗前台服务（兼容 Android 8.0 ~ Android 14+ / HarmonyOS） -->
         <service
             android:name=".service.FloatingPetService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Drink water reminder desktop floating pet and scheduler" />
-        </service>
+            android:foregroundServiceType="dataSync" />
 
         <!-- 闹钟广播接收器 -->
         <receiver
