@@ -1,0 +1,50 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- 水滴主体 -->
+    <path
+        android:fillColor="#29B6F6"
+        android:pathData="M32,4 C32,4 12,28 12,42 C12,53.05 20.95,62 32,62 C43.05,62 52,53.05 52,42 C52,28 32,4 32,4 Z" />
+    
+    <!-- 高光斑点 -->
+    <path
+        android:fillColor="#81D4FA"
+        android:pathData="M23,26 C23,26 18,34 18,40 C18,43 20,45 22,45 C20,43 19.5,39 23,34 C25,31 25.5,28 23,26 Z" />
+
+    <!-- 眼睛 - 左 -->
+    <path
+        android:fillColor="#0D47A1"
+        android:pathData="M24,40 A3,3.5 0 1,0 24,47 A3,3.5 0 1,0 24,40 Z" />
+    <!-- 眼睛反光 - 左 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M23,41 A1,1.2 0 1,0 23,43.4 A1,1.2 0 1,0 23,41 Z" />
+
+    <!-- 眼睛 - 右 -->
+    <path
+        android:fillColor="#0D47A1"
+        android:pathData="M40,40 A3,3.5 0 1,0 40,47 A3,3.5 0 1,0 40,40 Z" />
+    <!-- 眼睛反光 - 右 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39,41 A1,1.2 0 1,0 39,43.4 A1,1.2 0 1,0 39,41 Z" />
+
+    <!-- 腮红 - 左 -->
+    <path
+        android:fillColor="#FF8A80"
+        android:pathData="M18,46 A3,2 0 1,0 18,50 A3,2 0 1,0 18,46 Z" />
+    <!-- 腮红 - 右 -->
+    <path
+        android:fillColor="#FF8A80"
+        android:pathData="M46,46 A3,2 0 1,0 46,50 A3,2 0 1,0 46,46 Z" />
+
+    <!-- 微笑嘴巴 -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#0D47A1"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M28.5,46.5 Q32,50.5 35.5,46.5" />
+</vector>

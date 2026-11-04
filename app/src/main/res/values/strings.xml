@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">喝水桌宠</string>
+    <string name="subtitle">屏幕边缘陪伴你的喝水小助手</string>
+    <string name="switch_title">开启悬浮喝水桌宠</string>
+    <string name="switch_desc">开启后将在屏幕边缘显示可爱的喝水桌宠并定时提醒</string>
+    
+    <string name="interval_title">提醒间隔</string>
+    <string name="interval_30m">每 30 分钟（推荐）</string>
+    <string name="interval_45m">每 45 分钟</string>
+    <string name="interval_60m">每 60 分钟</string>
+    
+    <string name="permission_overlay_title">1. 悬浮窗显示权限</string>
+    <string name="permission_overlay_desc">用于在屏幕边缘显示桌宠形象与提醒气泡</string>
+    <string name="btn_grant">去授权</string>
+    <string name="btn_granted">已授权</string>
+    
+    <string name="permission_battery_title">2. 电池白名单（防杀后台）</string>
+    <string name="permission_battery_desc">允许后台持续计时，避免被手机系统自动关闭</string>
+    
+    <string name="test_bubble_title">功能快速体验</string>
+    <string name="btn_test_bubble">立即弹出提醒气泡</string>
+    
+    <string name="stats_today_title">今日喝水记录</string>
+    <string name="stats_cups_unit">杯</string>
+    
+    <string name="reminder_title">💧 喝水时间到了！</string>
+    <string name="reminder_content">已经过了半小时，起来喝杯温水，润润嗓子活动一下吧~</string>
+    <string name="btn_drink_done">喝了一杯 🥛</string>
+    <string name="btn_drink_delay">稍后提醒 ⏰</string>
+    <string name="feedback_drink_success">太棒了！已打卡 +1 杯 🎉</string>
+</resources>
