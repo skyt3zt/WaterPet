@@ -11,8 +11,8 @@ android {
         applicationId = "com.waterpet.app"
         minSdk = 26 // Android 8.0+
         targetSdk = 33 // 兼顾 Android 13/14 与 HarmonyOS/EMUI 10/11，避免高版本特有标签导致低系统解析失败
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

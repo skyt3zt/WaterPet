@@ -1,0 +1,16 @@
+{
+  "name": "喝水桌宠",
+  "short_name": "喝水桌宠",
+  "description": "屏幕桌宠伴你喝水，支持日历打卡与统计总览",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F5F9FC",
+  "theme_color": "#0288D1",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
