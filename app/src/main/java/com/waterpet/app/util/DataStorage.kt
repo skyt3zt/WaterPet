@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlin.math.ceil
 
 class DataStorage(context: Context) {
     private val prefs: SharedPreferences =
@@ -19,6 +20,20 @@ class DataStorage(context: Context) {
     var intervalMinutes: Int
         get() = prefs.getInt("key_interval_minutes", 30)
         set(value) = prefs.edit().putInt("key_interval_minutes", value).apply()
+
+    // 每日饮水目标总量 (ml)，默认 2000ml
+    var dailyTargetMl: Int
+        get() = prefs.getInt("key_daily_target_ml", 2000)
+        set(value) = prefs.edit().putInt("key_daily_target_ml", value.coerceAtLeast(100)).apply()
+
+    // 单杯水容量 (ml)，默认 250ml
+    var cupCapacityMl: Int
+        get() = prefs.getInt("key_cup_capacity_ml", 250)
+        set(value) = prefs.edit().putInt("key_cup_capacity_ml", value.coerceAtLeast(50)).apply()
+
+    // 计算满足每日目标需要喝多少杯
+    val targetCups: Int
+        get() = ceil(dailyTargetMl.toDouble() / cupCapacityMl.toDouble()).toInt().coerceAtLeast(1)
 
     fun getTodayDateStr(): String {
         return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -115,8 +130,9 @@ class DataStorage(context: Context) {
     // 月度总览统计数据
     data class MonthOverview(
         val totalCups: Int,
+        val totalMl: Int,
         val averageCups: Float,
-        val goalDays: Int, // 达标天数 (>= 8 杯)
+        val goalDays: Int, // 达到自定义目标的达标天数
         val activeDays: Int // 有喝水记录的天数
     )
 
@@ -125,12 +141,13 @@ class DataStorage(context: Context) {
         var totalCups = 0
         var goalDays = 0
         var activeDays = 0
+        val target = targetCups
 
         for ((_, cups) in daysData) {
             if (cups > 0) {
                 totalCups += cups
                 activeDays++
-                if (cups >= 8) {
+                if (cups >= target) {
                     goalDays++
                 }
             }
@@ -139,6 +156,7 @@ class DataStorage(context: Context) {
         val avg = if (activeDays > 0) totalCups.toFloat() / activeDays.toFloat() else 0f
         return MonthOverview(
             totalCups = totalCups,
+            totalMl = totalCups * cupCapacityMl,
             averageCups = avg,
             goalDays = goalDays,
             activeDays = activeDays

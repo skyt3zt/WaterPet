@@ -1,13 +1,17 @@
 package com.waterpet.app
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TableLayout
@@ -38,12 +42,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnBatteryPermission: Button
     private lateinit var btnTest: Button
 
+    // 🎯 目标与水杯设置控件
+    private lateinit var layoutTargetMl: View
+    private lateinit var tvDailyTargetMl: TextView
+    private lateinit var layoutCupCapacity: View
+    private lateinit var tvCupCapacityMl: TextView
+    private lateinit var tvTargetCalculation: TextView
+    private lateinit var pbTodayProgress: ProgressBar
+    private lateinit var tvTodayProgressText: TextView
+
     // 📊 日历统计相关控件
     private lateinit var btnPrevMonth: TextView
     private lateinit var btnNextMonth: TextView
     private lateinit var tvMonthYear: TextView
     private lateinit var tvMonthTotal: TextView
+    private lateinit var tvMonthTotalMl: TextView
     private lateinit var tvMonthGoal: TextView
+    private lateinit var tvMonthGoalLabel: TextView
     private lateinit var tvMonthAvg: TextView
     private lateinit var tableCalendar: TableLayout
     private lateinit var tvSelectedDate: TextView
@@ -61,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         storage = DataStorage(this)
-        
+
         val cal = Calendar.getInstance()
         displayYear = cal.get(Calendar.YEAR)
         displayMonth = cal.get(Calendar.MONTH) + 1
@@ -74,6 +89,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionStates()
+        updateGoalCard()
         renderCalendar()
     }
 
@@ -87,11 +103,23 @@ class MainActivity : AppCompatActivity() {
         btnBatteryPermission = findViewById(R.id.btnBatteryPermission)
         btnTest = findViewById(R.id.btnTest)
 
+        // 🎯 目标与水杯控件
+        layoutTargetMl = findViewById(R.id.layoutTargetMl)
+        tvDailyTargetMl = findViewById(R.id.tvDailyTargetMl)
+        layoutCupCapacity = findViewById(R.id.layoutCupCapacity)
+        tvCupCapacityMl = findViewById(R.id.tvCupCapacityMl)
+        tvTargetCalculation = findViewById(R.id.tvTargetCalculation)
+        pbTodayProgress = findViewById(R.id.pbTodayProgress)
+        tvTodayProgressText = findViewById(R.id.tvTodayProgressText)
+
+        // 📊 日历控件
         btnPrevMonth = findViewById(R.id.btnPrevMonth)
         btnNextMonth = findViewById(R.id.btnNextMonth)
         tvMonthYear = findViewById(R.id.tvMonthYear)
         tvMonthTotal = findViewById(R.id.tvMonthTotal)
+        tvMonthTotalMl = findViewById(R.id.tvMonthTotalMl)
         tvMonthGoal = findViewById(R.id.tvMonthGoal)
+        tvMonthGoalLabel = findViewById(R.id.tvMonthGoalLabel)
         tvMonthAvg = findViewById(R.id.tvMonthAvg)
         tableCalendar = findViewById(R.id.tableCalendar)
         tvSelectedDate = findViewById(R.id.tvSelectedDate)
@@ -142,6 +170,15 @@ class MainActivity : AppCompatActivity() {
                 ReminderAlarmReceiver.scheduleNextReminder(this, minutes)
                 Toast.makeText(this, "已更新提醒间隔为 $minutes 分钟", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        // 🎯 目标与水杯容量修改点击
+        layoutTargetMl.setOnClickListener {
+            showTargetMlDialog()
+        }
+
+        layoutCupCapacity.setOnClickListener {
+            showCupCapacityDialog()
         }
 
         // 权限按钮操作
@@ -205,23 +242,131 @@ class MainActivity : AppCompatActivity() {
         // 选定日期的打卡增减微调
         btnAddCup.setOnClickListener {
             storage.incrementWaterCountForDate(selectedDateStr)
+            updateGoalCard()
             renderCalendar()
         }
 
         btnMinusCup.setOnClickListener {
             storage.decrementWaterCount(selectedDateStr)
+            updateGoalCard()
             renderCalendar()
         }
+    }
+
+    // 🎯 刷新目标卡片数据与今日进度条
+    private fun updateGoalCard() {
+        val targetMl = storage.dailyTargetMl
+        val cupMl = storage.cupCapacityMl
+        val targetCups = storage.targetCups
+
+        tvDailyTargetMl.text = "$targetMl ml"
+        tvCupCapacityMl.text = "$cupMl ml"
+        tvTargetCalculation.text = "💡 每天需喝 $targetCups 杯水满足今日目标"
+
+        val todayCups = storage.getTodayWaterCount()
+        val todayMl = todayCups * cupMl
+        val percent = if (targetMl > 0) ((todayMl.toFloat() / targetMl.toFloat()) * 100).toInt().coerceAtMost(100) else 0
+
+        pbTodayProgress.progress = percent
+        val statusSuffix = if (todayMl >= targetMl) " 🎉 今日目标已达成！" else ""
+        tvTodayProgressText.text = "今日已喝：$todayMl / $targetMl ml ($todayCups / $targetCups 杯) · $percent%$statusSuffix"
+    }
+
+    // 弹出选择/修改每日目标弹窗
+    private fun showTargetMlDialog() {
+        val options = arrayOf(
+            "1500 ml (轻量饮水)",
+            "1800 ml (标准)",
+            "2000 ml (健康推荐)",
+            "2500 ml (运动补水)",
+            "3000 ml (高强度补水)",
+            "自定义容量..."
+        )
+        AlertDialog.Builder(this)
+            .setTitle("设置每日喝水目标总量")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> saveDailyTarget(1500)
+                    1 -> saveDailyTarget(1800)
+                    2 -> saveDailyTarget(2000)
+                    3 -> saveDailyTarget(2500)
+                    4 -> saveDailyTarget(3000)
+                    5 -> showCustomNumberDialog("请输入每日喝水目标 (ml)", storage.dailyTargetMl) { saveDailyTarget(it) }
+                }
+            }
+            .show()
+    }
+
+    // 弹出选择/修改单杯容量弹窗
+    private fun showCupCapacityDialog() {
+        val options = arrayOf(
+            "150 ml (小水杯)",
+            "200 ml (一次性纸杯)",
+            "250 ml (标准马克杯/推荐)",
+            "350 ml (大马克杯/咖啡杯)",
+            "500 ml (运动保温杯)",
+            "自定义容量..."
+        )
+        AlertDialog.Builder(this)
+            .setTitle("设置单杯水容量")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> saveCupCapacity(150)
+                    1 -> saveCupCapacity(200)
+                    2 -> saveCupCapacity(250)
+                    3 -> saveCupCapacity(350)
+                    4 -> saveCupCapacity(500)
+                    5 -> showCustomNumberDialog("请输入单杯容量 (ml)", storage.cupCapacityMl) { saveCupCapacity(it) }
+                }
+            }
+            .show()
+    }
+
+    private fun showCustomNumberDialog(title: String, initialValue: Int, onConfirm: (Int) -> Unit) {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+            setText(initialValue.toString())
+            setSelection(text.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(input)
+            .setPositiveButton("确定") { _, _ ->
+                val num = input.text.toString().toIntOrNull()
+                if (num != null && num > 0) {
+                    onConfirm(num)
+                } else {
+                    Toast.makeText(this, "请输入有效数值", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun saveDailyTarget(ml: Int) {
+        storage.dailyTargetMl = ml
+        updateGoalCard()
+        renderCalendar()
+        Toast.makeText(this, "每日目标已更新为 $ml ml (需喝 ${storage.targetCups} 杯)", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun saveCupCapacity(ml: Int) {
+        storage.cupCapacityMl = ml
+        updateGoalCard()
+        renderCalendar()
+        Toast.makeText(this, "单杯容量已更新为 $ml ml (需喝 ${storage.targetCups} 杯)", Toast.LENGTH_SHORT).show()
     }
 
     // 渲染日历网格与总览数据
     private fun renderCalendar() {
         tvMonthYear.text = String.format(Locale.getDefault(), "%d年%02d月", displayYear, displayMonth)
 
-        // 1. 刷新月度总览三大核心指标
+        // 1. 刷新月度总览核心指标
         val overview = storage.getMonthOverview(displayYear, displayMonth)
         tvMonthTotal.text = "${overview.totalCups} 杯"
+        tvMonthTotalMl.text = "约 ${overview.totalMl} ml"
         tvMonthGoal.text = "${overview.goalDays} 天"
+        tvMonthGoalLabel.text = "达标天数(≥${storage.targetCups}杯)"
         tvMonthAvg.text = String.format(Locale.getDefault(), "%.1f 杯", overview.averageCups)
 
         // 2. 构建日历网格
@@ -236,23 +381,22 @@ class MainActivity : AppCompatActivity() {
         val maxDays = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
         val monthData = storage.getMonthDaysData(displayYear, displayMonth)
         val todayStr = storage.getTodayDateStr()
+        val targetCups = storage.targetCups
 
-        var currentDay = 1
-        var currentRow: TableRow? = null
-
-        // 第一行填充空白单元格（1号之前的星期占位）
-        currentRow = TableRow(this).apply {
+        var currentRow: TableRow? = TableRow(this).apply {
             layoutParams = TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT, TableLayout.LayoutParams.WRAP_CONTENT)
         }
+
+        // 第一行填充空白单元格（1号之前的星期占位）
         for (i in 1 until firstDayOfWeek) {
-            currentRow.addView(createEmptyCell())
+            currentRow?.addView(createEmptyCell())
         }
 
         for (day in 1..maxDays) {
             val dateStr = String.format(Locale.getDefault(), "%04d-%02d-%02d", displayYear, displayMonth, day)
             val cups = monthData[day] ?: 0
 
-            val cellView = createDayCell(day, cups, dateStr, todayStr)
+            val cellView = createDayCell(day, cups, dateStr, todayStr, targetCups)
             currentRow?.addView(cellView)
 
             // 每周 7 天换行
@@ -268,7 +412,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 最后一行如果不满 7 天，补齐空白单元格保证对齐
+        // 最后一行补齐 7 天
         if (currentRow != null && currentRow.childCount > 0) {
             while (currentRow.childCount < 7) {
                 currentRow.addView(createEmptyCell())
@@ -287,7 +431,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun createDayCell(day: Int, cups: Int, dateStr: String, todayStr: String): View {
+    private fun createDayCell(day: Int, cups: Int, dateStr: String, todayStr: String, targetCups: Int): View {
         val container = LinearLayout(this).apply {
             layoutParams = TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f).apply {
                 setMargins(2, 2, 2, 2)
@@ -308,7 +452,7 @@ class MainActivity : AppCompatActivity() {
             isToday -> {
                 container.setBackgroundResource(R.drawable.bg_calendar_today)
             }
-            cups >= 8 -> {
+            cups >= targetCups -> {
                 container.setBackgroundResource(R.drawable.bg_calendar_goal)
             }
             else -> {
@@ -331,7 +475,7 @@ class MainActivity : AppCompatActivity() {
         }
         container.addView(tvDay)
 
-        // 喝水杯数角标 (如 "💧4" 或 "·")
+        // 喝水杯数角标 (如 "4" 或 "•")
         val tvCups = TextView(this).apply {
             gravity = Gravity.CENTER
             textSize = 9f
@@ -359,8 +503,13 @@ class MainActivity : AppCompatActivity() {
         tvSelectedDate.text = "📅 $selectedDateStr" + if (isToday) " (今天)" else ""
 
         val cups = storage.getWaterCountForDate(selectedDateStr)
-        val ml = cups * 250 // 每杯约 250ml
-        tvSelectedDetail.text = "共喝水 $cups 杯 (约 ${ml} ml)" + if (cups >= 8) " ✨ 达到每日目标！" else ""
+        val ml = cups * storage.cupCapacityMl
+        val targetCups = storage.targetCups
+        val targetMl = storage.dailyTargetMl
+        val isGoalReached = (ml >= targetMl)
+
+        tvSelectedDetail.text = "共喝水 $cups 杯 (约 ${ml} ml / 目标 ${targetMl} ml)" +
+                if (isGoalReached) " ✨ 达成目标！" else " (还需 ${targetCups - cups} 杯达标)"
     }
 
     private fun startPetService() {
